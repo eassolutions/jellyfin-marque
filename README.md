@@ -1,11 +1,24 @@
-# Jellyfin Marquee for Raspberry Pi Zero W
+# Jellyfin Marquee for Raspberry Pi
 
-A lightweight digital signage application that displays a rotating marquee of movies from a local Jellyfin server and plays them on demand. Designed for the Raspberry Pi Zero W with a vertical 1080p display.
+A lightweight digital signage application that displays a rotating marquee of movies from a local Jellyfin server and plays them on demand. Designed for the Raspberry Pi with a vertical 1080p display.
 
 ## Hardware Requirements
-- Raspberry Pi Zero W
+- Raspberry Pi
 - MicroSD Card (8GB+) with Raspberry Pi OS Lite (Legacy or Bullseye recommended for best SDL support, though Bookworm works with Wayland/X11 or direct DRM if configured).
 - 1080p Monitor (rotated vertically)
+
+## Configuration for Vertical Display
+
+Ensure your Raspberry Pi is configured for a vertical display.
+In `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
+
+```ini
+# Rotate display 90 degrees (if supported by firmware/driver)
+display_rotate=1 
+# OR use xrandr if running X11, or kernel command line arguments.
+```
+
+If the display is natively portrait (e.g. phone screen via HDMI), no rotation is needed. The script assumes a resolution of 1080x1920. If your resolution differs, edit `SCREEN_WIDTH` and `SCREEN_HEIGHT` in `jellyfin_marquee.py`.
 
 ## Installation
 
@@ -33,20 +46,7 @@ python3 jellyfin_marquee.py
 - **SPACE**: Play the video for the poster currently in the center.
 - **ESC**: Exit the application.
 
-## Configuration for Vertical Display
-
-Ensure your Raspberry Pi is configured for a vertical display.
-In `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
-
-```ini
-# Rotate display 90 degrees (if supported by firmware/driver)
-display_rotate=1 
-# OR use xrandr if running X11, or kernel command line arguments.
-```
-
-If the display is natively portrait (e.g. phone screen via HDMI), no rotation is needed. The script assumes a resolution of 1080x1920. If your resolution differs, edit `SCREEN_WIDTH` and `SCREEN_HEIGHT` in `jellyfin_marquee.py`.
-
-## Performance Tips for Pi Zero W
+## Performance Tips for Pi
 
 - **GPU Memory**: Increase GPU memory to at least 128MB or 256MB via `sudo raspi-config`.
 - **Resolution**: If 1080p is too slow, lower the resolution in `config.txt` to 720p (720x1280) for smoother animations.
