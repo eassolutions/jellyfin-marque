@@ -46,7 +46,7 @@ Set the `ROTATION` environment variable before running the script.
 
 Run the script with Python 3:
 ```bash
-python3 jellyfin_marquee.py
+export $(cat .env | xargs) && python3 jellyfin_marquee.py
 ```
 
 ### Controls
