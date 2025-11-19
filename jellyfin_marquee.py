@@ -86,9 +86,9 @@ class MarqueeApp:
             self.logical_w = self.width
             self.logical_h = self.height
 
-        # Set poster dimensions to 90% of logical screen
-        self.poster_w = int(self.logical_w * 0.9)
-        self.poster_h = int(self.logical_h * 0.9)
+        # Set poster dimensions to 85% of logical screen
+        self.poster_w = int(self.logical_w * 0.85)
+        self.poster_h = int(self.logical_h * 0.85)
         
         # Calculate margins to center the poster
         self.margin_x = (self.logical_w - self.poster_w) // 2
@@ -102,8 +102,13 @@ class MarqueeApp:
         if os.path.exists('border.png'):
             try:
                 border = pygame.image.load('border.png').convert_alpha()
-                # Resize border to fit physical screen
-                self.border_surf = pygame.transform.scale(border, (self.width, self.height))
+                # Resize border to fit logical screen first
+                border = pygame.transform.scale(border, (self.logical_w, self.logical_h))
+                # Rotate border if needed
+                if ROTATION != 0:
+                    border = pygame.transform.rotate(border, ROTATION)
+                # Ensure it fits physical screen (it should if rotation logic is correct, but let's be safe or just assign)
+                self.border_surf = border
                 logger.info("Loaded border.png")
             except Exception as e:
                 logger.error(f"Failed to load border.png: {e}")
@@ -219,7 +224,7 @@ class MarqueeApp:
 
             # Update
             if self.paused:
-                if current_time - self.pause_start_time >= 5:
+                if current_time - self.pause_start_time >= 8:
                     self.paused = False
                     self.last_centered_index = -1 # Allow pausing again on next one
             else:
