@@ -9,6 +9,7 @@ A lightweight digital signage application that displays a rotating marquee of mo
 
 ## Configuration for Vertical Display
 
+### Method 1: Hardware/OS Rotation (Recommended for Performance)
 Ensure your Raspberry Pi is configured for a vertical display.
 In `/boot/config.txt` (or `/boot/firmware/config.txt` on newer OS):
 
@@ -18,7 +19,9 @@ display_rotate=1
 # OR use xrandr if running X11, or kernel command line arguments.
 ```
 
-If the display is natively portrait (e.g. phone screen via HDMI), no rotation is needed. The application will **automatically detect the screen resolution** and scale the posters to fill the screen.
+### Method 2: Software Rotation
+If `display_rotate` does not work or you prefer a software solution, you can use the built-in rotation feature.
+Set the `ROTATION` environment variable before running the script.
 
 ## Installation
 
@@ -35,6 +38,8 @@ If the display is natively portrait (e.g. phone screen via HDMI), no rotation is
     ```bash
     export JELLYFIN_URL="http://192.168.1.100:8096"
     export JELLYFIN_API_KEY="your_jellyfin_api_key"
+    # Optional: Rotate UI (0, 90, 180, 270). Default is 0.
+    export ROTATION=90 
     ```
 
 ## Running the Application
