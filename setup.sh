@@ -14,8 +14,9 @@ echo "Installing dependencies... this may take awhile..."
 sudo apt-get install -y python3-pygame python3-requests mpv libsdl2-2.0-0 python3-pip
 
 echo "Installing yt-dlp (for YouTube trailer support)..."
-# Install yt-dlp via pip to ensure we have the latest version for YouTube compatibility
-sudo pip3 install yt-dlp
+# Install yt-dlp via standalone binary to avoid PEP 668 externally-managed-environment errors
+sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+sudo chmod a+rx /usr/local/bin/yt-dlp
 
 echo "Dependencies installed."
 
