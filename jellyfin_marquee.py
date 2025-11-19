@@ -86,9 +86,9 @@ class MarqueeApp:
             self.logical_w = self.width
             self.logical_h = self.height
 
-        # Set poster dimensions to 85% of logical screen
-        self.poster_w = int(self.logical_w * 0.85)
-        self.poster_h = int(self.logical_h * 0.85)
+        # Set poster dimensions to 80% of logical screen
+        self.poster_w = int(self.logical_w * 0.80)
+        self.poster_h = int(self.logical_h * 0.80)
         
         # Calculate margins to center the poster
         self.margin_x = (self.logical_w - self.poster_w) // 2
