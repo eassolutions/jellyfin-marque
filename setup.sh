@@ -23,6 +23,7 @@ echo "Creating configuration file..."
 if [ ! -f .env ]; then
     echo "JELLYFIN_URL=http://your-jellyfin-ip:8096" > .env
     echo "JELLYFIN_API_KEY=your_api_key" >> .env
+    echo "ROTATION=0" >> .env
     echo "Created .env file. Please edit it with your Jellyfin details."
 else
     echo ".env file already exists."
@@ -30,4 +31,4 @@ fi
 
 echo "Setup complete."
 echo "To run the application:"
-echo "  export $(cat .env | xargs) && python3 jellyfin_marquee.py"
+echo "export $(cat .env | xargs) && python3 jellyfin_marquee.py"

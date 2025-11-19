@@ -17,22 +17,10 @@ ROTATION = int(os.environ.get('ROTATION', '0')) # 0, 90, 180, 270
 # Display Settings
 # Resolution will be detected dynamically
 FPS = 30
-SCROLL_SPEED = 2  # Pixels per frame
-GAP = 0 # No gap if we want full screen posters, or maybe small gap? User said "poster width and height to take up the entire screen". 
-# If they take up the entire screen, there is only one visible at a time? Or is it a scrolling list of fullscreen images?
-# "Rotating Marquee" usually implies multiple. But "poster width and height to take up the entire screen" implies one.
-# If they are fullscreen, scrolling them might look like a slideshow or a filmstrip.
-# I will assume "take up the entire screen" means the height fills the screen, and width is proportional, OR they literally mean 1080x1920 posters.
-# Given "Rotating Marquee", I'll assume they mean the posters should be scaled to fit the screen HEIGHT, and width is proportional, 
-# OR if they want "entire screen" maybe they mean the poster fills the whole view?
-# "Set the poster width and height to take up the entire screen (therefor the same as the screen width and height variables)."
-# This implies 1 poster visible at a time, or they are just huge.
-# If they are huge, scrolling them is fine.
-# I will set POSTER_WIDTH/HEIGHT variables dynamically in the class.
+SCROLL_SPEED = 4  # Faster scroll
+GAP = 0 
 
-FONT_SIZE = 120 # Larger font for "pop"
 BG_COLOR = (0, 0, 0)
-TEXT_COLOR = (255, 215, 0) # Gold
 
 # Input Settings
 PLAY_KEY = pygame.K_SPACE
@@ -98,36 +86,36 @@ class MarqueeApp:
             self.logical_w = self.width
             self.logical_h = self.height
 
-        # Set poster dimensions to match logical screen
-        self.poster_w = self.logical_w
-        self.poster_h = self.logical_h
+        # Set poster dimensions to 90% of logical screen
+        self.poster_w = int(self.logical_w * 0.9)
+        self.poster_h = int(self.logical_h * 0.9)
+        
+        # Calculate margins to center the poster
+        self.margin_x = (self.logical_w - self.poster_w) // 2
+        self.margin_y = (self.logical_h - self.poster_h) // 2
         
         pygame.mouse.set_visible(False)
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, FONT_SIZE, bold=True)
+        
+        # Load Border Image
+        self.border_surf = None
+        if os.path.exists('border.png'):
+            try:
+                border = pygame.image.load('border.png').convert_alpha()
+                # Resize border to fit physical screen
+                self.border_surf = pygame.transform.scale(border, (self.width, self.height))
+                logger.info("Loaded border.png")
+            except Exception as e:
+                logger.error(f"Failed to load border.png: {e}")
         
         self.client = JellyfinClient(JELLYFIN_URL, JELLYFIN_API_KEY, USER_ID)
         self.items = []
         self.images = [] # List of (image_surface, item_data)
         self.scroll_x = 0
         self.running = True
-
-    def draw_text_with_shadow(self, text, center_pos):
-        # Render text normally first
-        shadow_surf = self.font.render(text, True, (0, 0, 0))
-        text_surf = self.font.render(text, True, TEXT_COLOR)
-        
-        if ROTATION != 0:
-            shadow_surf = pygame.transform.rotate(shadow_surf, ROTATION)
-            text_surf = pygame.transform.rotate(text_surf, ROTATION)
-            
-        # Calculate rects based on physical center_pos
-        # center_pos is passed as physical coordinates
-        shadow_rect = shadow_surf.get_rect(center=(center_pos[0] + 4, center_pos[1] + 4))
-        text_rect = text_surf.get_rect(center=center_pos)
-        
-        self.screen.blit(shadow_surf, shadow_rect)
-        self.screen.blit(text_surf, text_rect)
+        self.paused = False
+        self.pause_start_time = 0
+        self.last_centered_index = -1 # To prevent re-pausing on the same poster immediately
 
     def load_content(self):
         logger.info("Loading content from Jellyfin...")
@@ -202,11 +190,18 @@ class MarqueeApp:
         self.load_content()
         
         # Calculate total width of the marquee
-        # Since posters are full screen width, total width is count * width
-        total_width = len(self.images) * self.poster_w
+        # Since posters are 90% width, we treat the "slot" size as the full logical width?
+        # Or do we just scroll them with spacing?
+        # If we want them to pause in the center, it's easiest if we treat each item as taking up the full screen width (logical_w),
+        # but the image itself is only 90% of that, centered.
+        # So the "stride" is self.logical_w.
+        
+        stride = self.logical_w
+        total_width = len(self.images) * stride
         
         while self.running:
             dt = self.clock.tick(FPS)
+            current_time = time.time()
             
             # Event Handling
             for event in pygame.event.get():
@@ -217,83 +212,148 @@ class MarqueeApp:
                         self.running = False
                     elif event.key == PLAY_KEY:
                         # Play the one roughly in the center.
-                        offset = (self.scroll_x + self.width // 2) % total_width
-                        idx = int(offset // self.poster_w)
+                        offset = (self.scroll_x + self.logical_w // 2) % total_width
+                        idx = int(offset // stride)
                         if idx < len(self.images):
                             self.play_video(self.images[idx]['data'])
 
             # Update
-            self.scroll_x += SCROLL_SPEED
-            if self.scroll_x >= total_width:
-                self.scroll_x = 0
-            
+            if self.paused:
+                if current_time - self.pause_start_time >= 5:
+                    self.paused = False
+                    self.last_centered_index = -1 # Allow pausing again on next one
+            else:
+                self.scroll_x += SCROLL_SPEED
+                if self.scroll_x >= total_width:
+                    self.scroll_x = 0
+                
+                # Check for pause condition
+                # We want to pause when a poster is centered.
+                # A poster i is centered when its "slot" is centered.
+                # Slot i starts at i * stride.
+                # It is centered when i * stride - scroll_x = 0.
+                # (Since the slot is full screen width, aligning left edge aligns center).
+                
+                # We check if scroll_x is close to a multiple of stride
+                # We need to handle wrap around logic for the check too, but scroll_x resets.
+                
+                # Find closest index
+                # We want to snap if abs(scroll_x - i*stride) < speed
+                
+                # effective_scroll = self.scroll_x
+                # But we only care about the one currently visible?
+                # Actually, we just need to check if scroll_x % stride is close to 0.
+                
+                remainder = self.scroll_x % stride
+                # If remainder is small (just started a new slot) or large (about to end)
+                # We want to stop exactly at 0.
+                
+                # Since we increment by SPEED, we might skip 0.
+                # If remainder < SPEED, we are close to the start of a slot.
+                # But we want to pause when the poster is CENTERED.
+                # Since stride = logical_w, and poster is centered in stride,
+                # The poster is centered when the slot is aligned with the screen (offset 0).
+                
+                if remainder < SCROLL_SPEED and not self.paused:
+                    # Which index is this?
+                    idx = int(self.scroll_x // stride)
+                    if idx != self.last_centered_index:
+                        # Snap to exact position
+                        self.scroll_x = idx * stride
+                        self.paused = True
+                        self.pause_start_time = current_time
+                        self.last_centered_index = idx
+
             # Draw
             self.screen.fill(BG_COLOR)
             
             for i in range(len(self.images)):
                 # Calculate logical position
-                logical_x = (i * self.poster_w) - self.scroll_x
+                # The slot starts at i * stride
+                slot_x = (i * stride) - self.scroll_x
                 
                 # Wrap around logic (Logical)
-                while logical_x < -self.poster_w:
-                    logical_x += total_width
-                while logical_x > self.logical_w:
-                    logical_x -= total_width
+                while slot_x < -stride:
+                    slot_x += total_width
+                while slot_x > total_width - stride: # Wait, if it's too far right?
+                     # Standard wrap: if it's off screen to left, move to end.
+                     # If we use modulo arithmetic for scroll_x, we handle the main loop.
+                     # But for drawing we need to handle the "seam".
+                     pass
                 
+                # Better wrap logic for drawing:
+                # We iterate through all, but only draw if visible.
+                # We also need to draw the "wrapped" version if we are at the seam.
+                
+                # Let's use the standard loop with wrap check
+                # Position of slot i
+                base_x = i * stride
+                dist = base_x - self.scroll_x
+                
+                # Handle wrapping
+                # If dist is very negative (scrolled past), add total_width
+                while dist < -stride:
+                    dist += total_width
+                while dist > self.logical_w:
+                    dist -= total_width
+                
+                # Now dist is the screen x position of the left edge of the slot
                 # Only draw if visible
-                if -self.poster_w < logical_x < self.logical_w:
-                    # Calculate physical position based on rotation
-                    # We assume logical_y is 0 since it's full screen
+                if -stride < dist < self.logical_w:
+                    # Calculate where to put the image within the slot
+                    # Image is centered in the slot
+                    # Slot width = stride = logical_w
+                    # Image width = poster_w
+                    # Image x relative to slot = margin_x
+                    # Image y relative to slot = margin_y (since slot height = logical_h)
                     
+                    img_x = dist + self.margin_x
+                    img_y = self.margin_y
+                    
+                    # Physical conversion
                     dest_pos = (0, 0)
+                    
+                    # We need to rotate the final position logic
+                    # logical (img_x, img_y) -> physical
+                    
                     if ROTATION == 0:
-                        dest_pos = (logical_x, 0)
+                        dest_pos = (img_x, img_y)
                     elif ROTATION == 90:
-                        # 90 deg CCW rotation (Pygame standard)
-                        # Logical X (Left-Right) -> Physical Y (Bottom-Top)
-                        # Wait, Pygame rotate 90 is CCW.
-                        # [>] -> [^]
-                        # If we want it to scroll "Left to Right" visually on a 90 deg CW monitor:
-                        # Monitor Top is Right.
-                        # We want Image Top to point Right.
-                        # Image Top points Up (after 90 CCW).
-                        # Up is Left (on 90 CW monitor).
-                        # This is confusing. Let's assume ROTATION matches display_rotate (CW).
-                        # If ROTATION=90 (CW):
-                        # We should rotate image -90 (270) to compensate?
-                        # Or if we want to simulate rotation.
+                        # 90 CCW: (x, y) -> (y, height - x - w)
+                        # Wait, let's verify 90 CCW mapping again.
+                        # Input x is Right, y is Down.
+                        # Output x is Up, y is Left (relative to original).
+                        # Physical: x is Right, y is Down.
+                        # 90 CCW Image: Top points Left.
+                        # We want "Logical X" (Scroll direction) to map to "Physical Y" (Up/Down).
+                        # If we scroll "Right" logically, we scroll "Up" physically?
+                        # Let's assume standard mapping:
+                        # Logical (0,0) is Top-Left.
+                        # 90 Rotated (0,0) is Bottom-Left physically?
+                        # Let's stick to the previous working logic for 90:
+                        # dest_pos = (0, self.height - logical_x - self.poster_h)
+                        # Here logical_x is img_x.
+                        # And width is poster_w (which is logical width of image).
+                        # Height is poster_h (logical height).
                         
-                        # Let's stick to: ROTATION is the angle we rotate the ASSETS.
-                        # If ROTATION=90 (CCW in Pygame):
-                        # (0,0) -> (0, height) ?
-                        # Let's just map logical X to physical Y.
-                        # If we rotate 90 CCW:
-                        # The "Left" of the image becomes "Bottom".
-                        # So scrolling Right (+X) should mean scrolling Up (-Y).
-                        # dest_pos = (0, self.height - logical_x - self.poster_w) ?
+                        # But wait, we rotated the SURFACE too.
+                        # If surface is rotated 90, its width/height swapped.
+                        # surf.get_width() is now poster_h.
+                        # surf.get_height() is now poster_w.
                         
-                        # Let's simplify:
-                        # If ROTATION=90: We want the top of the image to be at the left of the screen.
-                        # And we want to scroll from Bottom to Top (Physical).
-                        dest_pos = (0, self.height - logical_x - self.poster_h) # Assuming poster_h is the 'width' in physical Y
-                        # Wait, self.poster_h (physical) is self.logical_w.
-                        # So logical_x is in range [0, logical_w].
-                        # We want to map 0 -> height, logical_w -> 0?
-                        
-                        # Let's try simple mapping:
-                        dest_pos = (0, self.height - logical_x - self.images[i]['surface'].get_height())
+                        dest_pos = (img_y, self.height - img_x - self.images[i]['surface'].get_height())
                         
                     elif ROTATION == 180:
-                        dest_pos = (self.width - logical_x - self.images[i]['surface'].get_width(), self.height - self.images[i]['surface'].get_height())
+                        dest_pos = (self.width - img_x - self.images[i]['surface'].get_width(), self.height - img_y - self.images[i]['surface'].get_height())
                     elif ROTATION == 270:
-                        # 270 CCW (90 CW)
-                        dest_pos = (0, logical_x)
+                        # 270 CCW
+                        dest_pos = (self.width - img_y - self.images[i]['surface'].get_width(), img_x)
                         
                     self.screen.blit(self.images[i]['surface'], dest_pos)
 
-            # Draw Overlay Text
-            # Center of screen
-            self.draw_text_with_shadow("Now Playing", (self.width // 2, self.height // 2))
+            # Draw Border Overlay
+            if self.border_surf:
+                self.screen.blit(self.border_surf, (0, 0))
             
             pygame.display.flip()
 
