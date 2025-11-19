@@ -5,7 +5,7 @@
 echo "Updating system..."
 sudo apt-get update
 
-echo "Installing dependencies..."
+echo "Installing dependencies... this may take awhile..."
 # python3-pygame: SDL2 bindings for Python
 # python3-requests: HTTP client
 # mpv: Video player (hardware accelerated on Pi)
