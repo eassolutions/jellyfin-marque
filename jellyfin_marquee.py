@@ -13,6 +13,7 @@ JELLYFIN_URL = os.environ.get('JELLYFIN_URL', 'http://localhost:8096')
 JELLYFIN_API_KEY = os.environ.get('JELLYFIN_API_KEY', 'YOUR_API_KEY_HERE')
 USER_ID = os.environ.get('JELLYFIN_USER_ID', '') # Optional: specific user context
 ROTATION = int(os.environ.get('ROTATION', '0')) # 0, 90, 180, 270
+POSTER_SCALE = float(os.environ.get('POSTER_SCALE', '0.8')) # Scale of poster relative to screen size
 
 # Display Settings
 # Resolution will be detected dynamically
@@ -86,9 +87,9 @@ class MarqueeApp:
             self.logical_w = self.width
             self.logical_h = self.height
 
-        # Set poster dimensions to 80% of logical screen
-        self.poster_w = int(self.logical_w * 0.80)
-        self.poster_h = int(self.logical_h * 0.80)
+        # Set poster dimensions based on configuration
+        self.poster_w = int(self.logical_w * POSTER_SCALE)
+        self.poster_h = int(self.logical_h * POSTER_SCALE)
         
         # Calculate margins to center the poster
         self.margin_x = (self.logical_w - self.poster_w) // 2

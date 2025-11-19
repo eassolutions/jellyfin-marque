@@ -25,6 +25,7 @@ if [ ! -f .env ]; then
     echo "JELLYFIN_URL=http://your-jellyfin-ip:8096" > .env
     echo "JELLYFIN_API_KEY=your_api_key" >> .env
     echo "ROTATION=0" >> .env
+    echo "POSTER_SCALE=0.8" >> .env
     echo "Created .env file. Please edit it with your Jellyfin details."
 else
     echo ".env file already exists."

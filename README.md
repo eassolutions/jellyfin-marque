@@ -40,6 +40,8 @@ Set the `ROTATION` environment variable before running the script.
     export JELLYFIN_API_KEY="your_jellyfin_api_key"
     # Optional: Rotate UI (0, 90, 180, 270). Default is 0.
     export ROTATION=90
+    # Optional: Scale of poster relative to screen size (0.1 to 1.0). Default is 0.8.
+    export POSTER_SCALE=0.8
     ```
 
 ## Running the Application
@@ -59,7 +61,7 @@ export $(cat .env | xargs) && python3 jellyfin_marquee.py
 You can add a custom border overlay (e.g., a frame) by placing a file named `border.png` in the same directory as the script.
 - The image should be a PNG with transparency.
 - It will be automatically resized to fit the screen.
-- Posters are scaled to 90% of the screen size to fit within a border.
+- Posters are scaled to 80% of the screen size by default to fit within a border (configurable via `POSTER_SCALE`).
 
 ## Performance Tips for Pi
 
