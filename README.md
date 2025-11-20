@@ -1,6 +1,6 @@
 # Jellyfin Marquee for Raspberry Pi
 
-A lightweight digital signage application that displays a rotating marquee of movies from a local Jellyfin server and plays them on demand. Designed for the Raspberry Pi with a vertical display.
+A lightweight digital signage application that displays a rotating marquee of movie posters from a local Jellyfin server. Designed for the Raspberry Pi with a vertical display.
 
 ## Hardware Requirements
 - Raspberry Pi
