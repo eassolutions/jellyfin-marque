@@ -4,7 +4,6 @@ import sys
 import time
 import requests
 import pygame
-import subprocess
 import logging
 from io import BytesIO
 
@@ -24,7 +23,6 @@ GAP = 0
 BG_COLOR = (0, 0, 0)
 
 # Input Settings
-PLAY_KEY = pygame.K_SPACE
 EXIT_KEY = pygame.K_ESCAPE
 
 logging.basicConfig(level=logging.INFO)
@@ -49,7 +47,7 @@ class JellyfinClient:
         # Endpoint for latest movies. Adjust params as needed.
         # If user_id is provided, use it to get user-specific views if needed.
         # Here we just get latest movies from all libraries.
-        url = f"{self.base_url}/Items?Recursive=true&IncludeItemTypes=Movie&SortBy=DateCreated&SortOrder=Descending&Limit=20&Fields=PrimaryImageAspectRatio,RemoteTrailers"
+        url = f"{self.base_url}/Items?Recursive=true&IncludeItemTypes=Movie&SortBy=DateCreated&SortOrder=Descending&Limit=20&Fields=PrimaryImageAspectRatio"
         if self.user_id:
             url += f"&UserId={self.user_id}"
         
@@ -155,42 +153,7 @@ class MarqueeApp:
                 surf = pygame.transform.rotate(surf, ROTATION)
             self.images.append({'surface': surf, 'data': {'Name': 'No Content', 'Id': None}})
 
-    def play_video(self, item):
-        # Check for trailers first
-        video_url = None
-        remote_trailers = item.get('RemoteTrailers', [])
-        if remote_trailers:
-            # Use the first trailer
-            video_url = remote_trailers[0].get('Url')
-            logger.info(f"Found trailer URL: {video_url}")
-        
-        if not video_url and item.get('Id'):
-             # Fallback to movie if no trailer? User said "Instead of trying to play the movie... play the trailer"
-             # But if no trailer exists, maybe we shouldn't play anything or fallback?
-             # I'll fallback to movie for robustness, or maybe just log.
-             # "Instead of" implies replacement. I will try trailer, if not found, log warning and maybe skip.
-             logger.warning(f"No trailer found for {item.get('Name')}")
-             return
 
-        logger.info(f"Playing video: {item.get('Name')} from {video_url}")
-        
-        # Stop Pygame loop temporarily
-        pygame.display.iconify() 
-        
-        try:
-            # mpv handles youtube URLs natively if yt-dlp is installed
-            cmd = ['mpv', '--fs', '--ontop', video_url]
-            if ROTATION != 0:
-                # mpv rotation is clockwise 0-360
-                # We pass the rotation directly
-                cmd.append(f'--video-rotate={ROTATION}')
-            subprocess.run(cmd, check=True)
-        except Exception as e:
-            logger.error(f"Error playing video: {e}")
-        
-        # Restore display
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN)
-        pygame.mouse.set_visible(False)
 
     def run(self):
         self.load_content()
@@ -216,12 +179,6 @@ class MarqueeApp:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == EXIT_KEY:
                         self.running = False
-                    elif event.key == PLAY_KEY:
-                        # Play the one roughly in the center.
-                        offset = (self.scroll_x + self.logical_w // 2) % total_width
-                        idx = int(offset // stride)
-                        if idx < len(self.images):
-                            self.play_video(self.images[idx]['data'])
 
             # Update
             if self.paused:

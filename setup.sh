@@ -8,15 +8,8 @@ sudo apt-get update
 echo "Installing dependencies... this may take awhile..."
 # python3-pygame: SDL2 bindings for Python
 # python3-requests: HTTP client
-# mpv: Video player (hardware accelerated on Pi)
 # libsdl2-2.0-0: SDL2 library
-# python3-pip: To install yt-dlp
-sudo apt-get install -y python3-pygame python3-requests mpv libsdl2-2.0-0 python3-pip
-
-echo "Installing yt-dlp (for YouTube trailer support)..."
-# Install yt-dlp via standalone binary to avoid PEP 668 externally-managed-environment errors
-sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
-sudo chmod a+rx /usr/local/bin/yt-dlp
+sudo apt-get install -y python3-pygame python3-requests libsdl2-2.0-0
 
 echo "Dependencies installed."
 
