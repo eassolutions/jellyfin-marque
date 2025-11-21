@@ -63,11 +63,7 @@ class JellyfinClient:
     def get_image_url(self, item_id):
         return f"{self.base_url}/Items/{item_id}/Images/Primary"
 
-    def get_video_stream_url(self, item_id):
-        # Construct a stream URL. 
-        # Note: This is a direct stream URL. Transcoding might be needed depending on the player and file support.
-        # Using Static=true to try and get the original file if possible, or let Jellyfin decide.
-        return f"{self.base_url}/Videos/{item_id}/stream?static=true&api_key={self.api_key}"
+
 
 class MarqueeApp:
     def __init__(self):
