@@ -1,10 +1,9 @@
-# Jellyfin Marquee for Raspberry Pi
+# Jellyfin Marquee for Linux
 
-A lightweight digital signage application that displays a rotating marquee of movie posters from a local Jellyfin server. Designed for the Raspberry Pi with a vertical display.
+A lightweight digital signage application that displays a rotating marquee of movie posters from a local Jellyfin server. Designed for Linux systems with a vertical display.
 
 ## Hardware Requirements
-- Raspberry Pi
-- MicroSD Card (8GB+) with Raspberry Pi OS Lite (Legacy or Bullseye recommended for best SDL support, though Bookworm works with Wayland/X11 or direct DRM if configured).
+- Linux System (Debian/Ubuntu based recommended)
 - Monitor (rotated vertically)
 
 ## Display Rotation
@@ -20,7 +19,7 @@ Set this variable in the `.env` file or export it before running the script.
 
 ## Installation
 
-1.  **Clone the repository** or copy the files to your Pi.
+1.  **Clone the repository** or copy the files to your system.
 2.  **Run the setup script**:
     ```bash
     chmod +x setup.sh
@@ -57,6 +56,6 @@ You can add a custom border overlay (e.g., a frame) by placing a file named `bor
 - It will be automatically resized to fit the screen.
 - Posters are scaled to 80% of the screen size by default to fit within a border (configurable via `POSTER_SCALE`).
 
-## Performance Tips for Pi
+## Performance Tips
 
-- **GPU Memory**: Increase GPU memory to at least 128MB or 256MB via `sudo raspi-config`.
+- **GPU Memory**: If running on low-end hardware (like a Raspberry Pi), ensure sufficient GPU memory is allocated (e.g., 128MB+).

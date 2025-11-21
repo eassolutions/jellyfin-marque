@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Jellyfin Marquee Setup Script for Raspberry Pi Zero W
+# Jellyfin Marquee Setup Script
 
 echo "Updating system..."
 sudo apt-get update
